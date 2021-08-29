@@ -21,20 +21,20 @@ end
 # w(addr)(len)(s|c)(data)
 Base.write(b::I2CBus, byte::UInt8) = begin
   write(b.io, 'w', b.slave, 0x01, 's', byte)
-  @assert read(b.io, UInt8) == 0x00 "error writing to the I²C bus"
+  @assert read(b.io, UInt8) == 0x01 "error writing to the I²C bus"
   1
 end
 Base.write(b::I2CBus, buf::Vector{UInt8}) = begin
   nb = UInt8(length(buf))
   write(b.io, 'w', b.slave, nb, 's', buf)
-  @assert read(b.io, UInt8) == 0x00 "error writing to the I²C bus"
+  @assert read(b.io, UInt8) == 0x01 "error writing to the I²C bus"
   nb
 end
 
 # r(addr)(len)(s|c)
 Base.read(b::I2CBus, nb::Integer) = begin
   write(b.io, 'r', b.slave, UInt8(nb), 's')
-  @assert read(b.io, UInt8) == 0x00 "error reading from the I²C bus"
+  @assert read(b.io, UInt8) == 0x01 "error reading from the I²C bus"
   bytes = read(b.io, nb)
   @assert nb == length(bytes) "$nb bytes request but $(length(bytes)) received"
   bytes
@@ -44,9 +44,9 @@ end
 Base.read(b::I2CBus, c::Command) = begin
   write(b.io, 'w', b.slave, 0x01, 'c', c.byte)
   c.delay > 0s && sleep(c.delay)
+  @assert read(b.io, UInt8) == 0x01 "error writing to the I²C bus"
   write(b.io, 'r', b.slave, c.length, 's')
-  @assert read(b.io, UInt8) == 0x00 "error writing to the I²C bus"
-  @assert read(b.io, UInt8) == 0x00 "error reading from the I²C bus"
+  @assert read(b.io, UInt8) == 0x01 "error reading from the I²C bus"
   bytes = read(b.io, c.length)
   @assert c.length == length(bytes) "$(c.length) bytes request but $(length(bytes)) received"
   bitcat(c.type, bytes)
